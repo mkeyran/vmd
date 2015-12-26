@@ -47,6 +47,8 @@ my $msg_help =
   "  $0 --page 'http://vk.com/audio?album_id=27680175&id=23962687'\n".
   "  Получение ссылок на mp3 файлы и создание плей листов:\n".
   "  $0 --gid 'dubstep light' --m3u play_list.m3u\n".
+  "  Скачивание 30 рекомендаций в случайном порядке:\n".
+  "  $0 --vkrec 30 --vkrecshuffle\n".
   "\nВажно!\n".
   "Под Windows параметры командной строки надо вводить в двойных кавычках!\n".
   "Загрузка музыки происходит в текущую директорию.\n".
@@ -65,7 +67,7 @@ my $msg_authorize_fail = "Упс! Что-то пошло не так и авто
 
 my ($help_flag,$version_flag,
     $login,$password,$api_id,
-    $uid,$gid,$aid,$rec,$page,$m3u,
+    $uid,$gid,$aid,$rec,$page,$m3u,$vkrec,$vkrecshuffle
     );
 
 my $trh = 2; # кол-во потоков по умолчанию
@@ -82,6 +84,8 @@ GetOptions("help"       => \$help_flag,
            "trh=i"      => \$trh,
            "page=s"     => \$page,
            "m3u=s"     => \$m3u,
+           "vkrec=i"   => \$vkrec,
+           "vkrecshuffle" => \$vkrecshuffle,
           );
 
 $api_id = 2998239 unless $api_id;
@@ -214,6 +218,15 @@ elsif ($page) {
   push @{$audios}, $+ while ($content =~ /id=\"audio([\d_-]+)\"/g);
   return 0 unless @{$audios};
   my $tracks = $vk->request('audio.getById',{audios=>join(',',@{$audios})});
+  &download($tracks);
+}
+elsif ($vkrec) {
+  $vk = &app;
+  my $vkshuffle = $vkrecshuffle?1:0;
+  if ($vkrec > 1000) {
+      $vkrec = 1000;
+  }
+  my $tracks = $vk->request('audio.getRecommendations',{user_id=>$uid, count=>$vkrec, shuffle=>$vkrecshuffle});
   &download($tracks);
 }
 else {
